@@ -50,14 +50,6 @@ def get_projects():
   return jsonify({'projects': projects})
 
 
-# @app.route('/project/<string:name>')
-# def get_project(name):
-#   for project in projects:
-#     if project['name'] == name:
-#       return jsonify(project)
-#   return jsonify({'message': 'project not found'})
-
-
 @app.route('/project/<string:project_id>')
 def get_project(project_id):
   for project in projects:
@@ -74,26 +66,23 @@ def get_all_tasks_in_project(name):
   return jsonify({'message': 'project not found'})
 
 
-# @app.route('/project', methods=['POST'])
-# def create_project():
-#   # lekérdezzük a http request body-ból a JSON adatot:
-#   request_data = request.get_json()
-#   new_project = {'name': request_data['name'], 'tasks': request_data['tasks']}
-#   projects.append(new_project)
-#   return jsonify(new_project)
-
-
-@app.route('/project/<string:name>/task', methods=['POST'])
-def add_task_to_project(name):
+@app.route('/project/<string:project_id>/task', methods=['POST'])
+def add_task_to_project(project_id):
   request_data = request.get_json()
   for project in projects:
-    if project['name'] == name:
+    if project['project_id'] == project_id:
       new_task = {
           'name': request_data['name'],
-          'completed': request_data['completed']
+          'completed': request_data['completed'],
+          'checklist': request_data['checklist']
       }
+      # a generált task id hozzáadása
+      new_task_id = idGenerator()
+      new_task['task_id'] = new_task_id
       project['tasks'].append(new_task)
-      return jsonify(new_task)
+      save_data(projects)
+      # return jsonify(new_task)
+      return jsonify({'message': f'task created with id: {new_task_id}'})
   return jsonify({'message': 'project not found'})
 
 
