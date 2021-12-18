@@ -1,15 +1,28 @@
 from flask import Flask, render_template, request
 from flask.json import jsonify
 
+import pickle
+
 app = Flask(__name__)
 
-projects = [{
-    'name': 'my project',
-    'tasks': [{
-        'name': 'my task',
-        'completed': False
-    }]
-}]
+
+def readPickleData(inputFileName):
+  with open(inputFileName, 'rb') as pickleFile:
+    # projekts beolvasása a pickle fileból
+    pickleData = pickle.load(pickleFile)
+  # a dict többszörösen létrehozta a projects-et azért mélyebb szintől indítottam
+  return pickleData[0]
+
+
+projects = readPickleData('projects.pickle')
+
+# projects = [{
+#     'name': 'my project',
+#     'tasks': [{
+#         'name': 'my task',
+#         'completed': False
+#     }]
+# }]
 
 
 @app.route('/')
