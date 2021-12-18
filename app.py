@@ -36,10 +36,18 @@ def get_projects():
   return jsonify({'projects': projects})
 
 
-@app.route('/project/<string:name>')
-def get_project(name):
+# @app.route('/project/<string:name>')
+# def get_project(name):
+#   for project in projects:
+#     if project['name'] == name:
+#       return jsonify(project)
+#   return jsonify({'message': 'project not found'})
+
+
+@app.route('/project/<string:project_id>')
+def get_project(project_id):
   for project in projects:
-    if project['name'] == name:
+    if project['project_id'] == project_id:
       return jsonify(project)
   return jsonify({'message': 'project not found'})
 
