@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Response
 from flask.json import jsonify
 
 import pickle
@@ -116,6 +116,17 @@ def create_project():
   save_data(projects)
   # return jsonify(new_project)
   return jsonify({'message': f'project created with id: {new_project_id}'})
+
+
+@app.route('/project/<string:project_id>/complete', methods=['POST'])
+def change_project_status(project_id):
+  for project in projects:
+    if project['project_id'] == project_id:
+      if project['completed'] == False:
+        project['completed'] = True
+        return jsonify(project)
+  # Üres string & 200as response code - Link: https://flask.palletsprojects.com/en/2.0.x/api/
+  return Response('', status=200)
 
 
 if __name__ == '__main__':
