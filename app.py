@@ -2,11 +2,17 @@ from flask import Flask, render_template, request
 from flask.json import jsonify
 
 import pickle
+import uuid
 
 app = Flask(__name__)
 
 
-def readPickleData(inputFileName):
+# project id generator
+def idGenerator():
+  return uuid.uuid4().hex[:24]
+
+
+def read_pickle_data(inputFileName):
   with open(inputFileName, 'rb') as pickleFile:
     # projekts beolvasása a pickle fileból
     pickleData = pickle.load(pickleFile)
@@ -14,7 +20,15 @@ def readPickleData(inputFileName):
   return pickleData[0]
 
 
-projects = readPickleData('projects.pickle')
+def save_data(dataDict):
+  with open('projects.pickle', 'wb') as pickleFile:
+    # Vissza konvertálás list-be kiíráshoz
+    tmp = []
+    tmp.append(dataDict)
+    pickle.dump(tmp, pickleFile)
+
+
+projects = read_pickle_data('projects.pickle')
 
 # projects = [{
 #     'name': 'my project',
@@ -60,13 +74,13 @@ def get_all_tasks_in_project(name):
   return jsonify({'message': 'project not found'})
 
 
-@app.route('/project', methods=['POST'])
-def create_project():
-  # lekérdezzük a http request body-ból a JSON adatot:
-  request_data = request.get_json()
-  new_project = {'name': request_data['name'], 'tasks': request_data['tasks']}
-  projects.append(new_project)
-  return jsonify(new_project)
+# @app.route('/project', methods=['POST'])
+# def create_project():
+#   # lekérdezzük a http request body-ból a JSON adatot:
+#   request_data = request.get_json()
+#   new_project = {'name': request_data['name'], 'tasks': request_data['tasks']}
+#   projects.append(new_project)
+#   return jsonify(new_project)
 
 
 @app.route('/project/<string:name>/task', methods=['POST'])
@@ -81,6 +95,27 @@ def add_task_to_project(name):
       project['tasks'].append(new_task)
       return jsonify(new_task)
   return jsonify({'message': 'project not found'})
+
+
+@app.route('/project', methods=['POST'])
+def create_project():
+  # lekérdezzük a http request body-ból a JSON adatot:
+  request_data = request.get_json()
+  # létrehozom az új projektet
+  new_project = {
+      'name': request_data['name'],
+      'creation_date': request_data['creation_date'],
+      'completed': request_data['completed'],
+      'tasks': request_data['tasks']
+  }
+  # a generált projekt id hozzáadása
+  new_project_id = idGenerator()
+  new_project['project_id'] = new_project_id
+  # a létrehozott új projektet belerakom a projektek közé
+  projects.append(new_project)
+  save_data(projects)
+  # return jsonify(new_project)
+  return jsonify({'message': f'project created with id: {new_project_id}'})
 
 
 if __name__ == '__main__':
