@@ -28,15 +28,24 @@ def save_data(dataDict):
     pickle.dump(tmp, pickleFile)
 
 
-projects = read_pickle_data('projects.pickle')
+def filter_list_of_dicts(list_of_dicts, fields):
+  # 1. üres lista
+  filtered_dicts = []
+  # 2. bemeneti listán végig megy
+  for item_of_dicts in list_of_dicts:
+    # 3. az aktuális elem másolata
+    item_copy = item_of_dicts.copy()
+    # 4. key-value párokkal végigmegyünk a az elemen
+    for key, value in item_of_dicts.items():
+      # 5. ha nincs az elem a fileds listában tötölve lesz a copy-ból
+      if key not in fields:
+        item_copy.pop(key, None)
+    # 6. a kimenetei filtered_dict lista feltöltése
+    filtered_dicts.append(item_copy)
+  return filtered_dicts
 
-# projects = [{
-#     'name': 'my project',
-#     'tasks': [{
-#         'name': 'my task',
-#         'completed': False
-#     }]
-# }]
+
+projects = read_pickle_data('projects.pickle')
 
 
 @app.route('/')
@@ -47,6 +56,10 @@ def home():
 
 @app.route('/project')
 def get_projects():
+  request_data = request.get_json()
+  if request_data:
+    if "fields" in request_data:
+      return jsonify(filter_list_of_dicts(projects, request_data["fields"]))
   return jsonify({'projects': projects})
 
 
@@ -58,10 +71,34 @@ def get_project(project_id):
   return jsonify({'message': 'project not found'})
 
 
-@app.route('/project/<string:name>/task')
-def get_all_tasks_in_project(name):
+# a név alapú megoldás
+# @app.route('/project/<string:name>/task')
+# def get_all_tasks_in_project(name):
+#   request_data = request.get_json()
+#   for project in projects:
+#     if project['name'] == name:
+#       if request_data:
+#         if "fields" in request_data:
+#           return jsonify({
+#               'tasks':
+#               filter_list_of_dicts(project['tasks'], request_data["fields"])
+#           })
+#       return jsonify({'tasks': project['tasks']})
+#   return jsonify({'message': 'project not found'})
+
+
+# a 6. feladat úgy láttam a get_all_tasks_in_project függvény project ID alapú ellenőrzést vár ezért átírtam get_all_tasks_in_project id alapú lekérésre, a fő logika (filter logika) ugyan az marad akér név akár ID alapú a lekérés ld. "a név alapú megoldás"
+@app.route('/project/<string:project_id>/task')
+def get_all_tasks_in_project(project_id):
+  request_data = request.get_json()
   for project in projects:
-    if project['name'] == name:
+    if project['project_id'] == project_id:
+      if request_data:
+        if "fields" in request_data:
+          return jsonify({
+              'tasks':
+              filter_list_of_dicts(project['tasks'], request_data["fields"])
+          })
       return jsonify({'tasks': project['tasks']})
   return jsonify({'message': 'project not found'})
 
@@ -81,7 +118,6 @@ def add_task_to_project(project_id):
       new_task['task_id'] = new_task_id
       project['tasks'].append(new_task)
       save_data(projects)
-      # return jsonify(new_task)
       return jsonify({'message': f'task created with id: {new_task_id}'})
   return jsonify({'message': 'project not found'})
 
@@ -103,7 +139,6 @@ def create_project():
   # a létrehozott új projektet belerakom a projektek közé
   projects.append(new_project)
   save_data(projects)
-  # return jsonify(new_project)
   return jsonify({'message': f'project created with id: {new_project_id}'})
 
 
